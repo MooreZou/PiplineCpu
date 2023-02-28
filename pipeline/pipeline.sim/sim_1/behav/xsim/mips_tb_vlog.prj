@@ -1,0 +1,27 @@
+# compile verilog/system verilog design source files
+sv xil_defaultlib  --include "../../../../pipeline.srcs/sources_1/new" \
+"../../../../pipeline.srcs/sources_1/new/ArithmaticLogicUnit.sv" \
+"../../../../pipeline.srcs/sources_1/new/BlockingUnit.sv" \
+"../../../../pipeline.srcs/sources_1/new/CPU.sv" \
+"../../../../pipeline.srcs/sources_1/new/ControllerUnit.sv" \
+"../../../../pipeline.srcs/sources_1/new/DataMemory.sv" \
+"../../../../pipeline.srcs/sources_1/new/Execution.sv" \
+"../../../../pipeline.srcs/sources_1/new/ForwardingUnit.sv" \
+"../../../../pipeline.srcs/sources_1/new/GeneralPurposeRegisters.sv" \
+"../../../../pipeline.srcs/sources_1/new/InstructionDecode.sv" \
+"../../../../pipeline.srcs/sources_1/new/InstructionFetch.sv" \
+"../../../../pipeline.srcs/sources_1/new/InstructionMemory.sv" \
+"../../../../pipeline.srcs/sources_1/new/Memory.sv" \
+"../../../../pipeline.srcs/sources_1/new/Printer.sv" \
+"../../../../pipeline.srcs/sources_1/new/ProgramCounter.sv" \
+"../../../../pipeline.srcs/sources_1/new/SignExtendUnit.sv" \
+"../../../../pipeline.srcs/sources_1/new/WriteBack.sv" \
+
+verilog xil_defaultlib  --include "../../../../pipeline.srcs/sources_1/new" \
+"C:/Users/lenovo/Desktop/计算机系统实现I/Pipeline/Pipeline 50/mips_tb.v" \
+
+# compile glbl module
+verilog xil_defaultlib "glbl.v"
+
+# Do not sort compile order
+nosort

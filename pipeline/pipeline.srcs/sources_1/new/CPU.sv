@@ -1,0 +1,128 @@
+`timescale 1ns / 1ps
+
+`include "Settings.vh"
+
+module TopLevel(
+    input logic clock,
+    input logic reset
+    );
+
+    SystemSignal system;
+    assign system.reset = reset;
+    assign system.clock = clock;
+
+    IF_ID_Reg IF_ID_Result;
+    ID_EX_Reg ID_EX_Result;
+    EX_MEM_Reg EX_MEM_Result;
+    MEM_WB_Reg MEM_WB_Result;
+
+    logic regWriteEnabled;
+    Vec5 regWriteDst;
+    int regWriteData;
+    int regReadDataA, regReadDataB;
+
+    Forwarding_t ForwardA, ForwardB, ForwardBranchA, ForwardBranchB;
+    logic stall, stallPeriod;
+
+    logic jump;
+    int jumpValue;
+    logic busyMDU;
+
+    int memWriteInput;
+
+    InstructionFetch IF(
+        .system(system),
+        .jumpValue(jumpValue),
+        .jumpEnabled(jump),
+        .stall(stall),
+        .result(IF_ID_Result)
+    );
+
+    InstructionDecode ID(
+        .system(system),
+        .clear(stall),
+        .ForwardBranchA(ForwardBranchA),
+        .ForwardBranchB(ForwardBranchB),
+        .IF_ID_Result(IF_ID_Result),
+        .ID_EX_Result(ID_EX_Result),
+        .EX_MEM_Result(EX_MEM_Result),
+        .MEM_WB_Result(MEM_WB_Result),
+        .regReadDataA(regReadDataA),
+        .regReadDataB(regReadDataB),
+        .jump(jump),
+        .jumpValue(jumpValue),
+        .stallPeriod(stallPeriod)
+    );
+
+    Execution EX(
+        .system(system),
+        .ID_EX_Result(ID_EX_Result),
+
+        .EX_MEM_Result(EX_MEM_Result),
+        .MEM_WB_Result(MEM_WB_Result),
+        .ForwardSignalA(ForwardA),
+        .ForwardSignalB(ForwardB),
+        .busyMDU(busyMDU)
+    );
+
+    Memory MEM(
+        .system(system),
+        .EX_MEM_Result(EX_MEM_Result),
+        .MEM_WB_Result(MEM_WB_Result),
+        .memWriteInput(memWriteInput)
+    );
+
+    WriteBack WB(
+        .system(system),
+        .MEM_WB_Result(MEM_WB_Result),
+        .writeEnabled(regWriteEnabled),
+        .regWriteDst(regWriteDst),
+        .regWriteData(regWriteData)
+    );
+
+    GeneralPurposeRegisters GPR(
+        .system(system),
+        .readNoA(IF_ID_Result.instruction.rs),
+        .readNoB(IF_ID_Result.instruction.rt),
+        .writeNo(regWriteDst),
+        .writeEnabled(regWriteEnabled),
+        .writeContent(regWriteData),
+        .readResultA(regReadDataA),
+        .readResultB(regReadDataB),
+        .programCounter(MEM_WB_Result.pcValue)
+    );
+
+    ForwardingUnit FU(
+        .IF_ID_Result(IF_ID_Result),
+        .ID_EX_Result(ID_EX_Result),
+        .EX_MEM_Result(EX_MEM_Result),
+        .MEM_WB_Result(MEM_WB_Result),
+        .ForwardA(ForwardA),
+        .ForwardB(ForwardB),
+        .ForwardBranchA(ForwardBranchA),
+        .ForwardBranchB(ForwardBranchB)
+    );
+
+    BlockingUnit BU(
+        .system(system),
+        .ID_EX_Result(ID_EX_Result),
+        .IF_ID_Result(IF_ID_Result),
+        .stallPeriod(stallPeriod),
+        .busyMDU(busyMDU),
+        .stall(stall)
+    );
+
+    Printer PU(
+    .system(system),
+    .GPRWriteNo(regWriteDst),
+    .GPRWriteContent(regWriteData),
+    .GPRProgramCounter(MEM_WB_Result.pcValue),
+    .GPRWriteEnabled(regWriteEnabled),
+
+    .address({EX_MEM_Result.aluResult[31:2], 2'b00}),
+    .DMProgramCounter(EX_MEM_Result.pcValue),
+    .DMWriteInput(memWriteInput),
+    .DMWriteEnabled(EX_MEM_Result.signal.memWriteEnabled)
+    );
+
+endmodule
